@@ -1,9 +1,12 @@
 (clear)
 
-(watch instances)
-
 (load fn71568_classes.clp)
 (load-instances fn71568_instances.clp)
+
+(deftemplate symptom-disease
+    (slot symptom-name)
+    (slot disease-name)
+)
 
 (deffunction ask-boolean-answer-question (?question $?allowed-values)
     (printout t ?question)
@@ -28,39 +31,24 @@
         then yes 
         else no))
 
-(defrule determine-patient-data ""
-    => 
-    (assert (patient-first-name (ask-question "What is your first name? ")))
-    (assert (patient-last-name (ask-question "What is your last name? ")))
-    (assert (patient-gender (ask-question "What is your gender(male/female)? ")))
-    (assert (patient-age (ask-question "What is your age? ")))
+(deffunction ask-for-symptom ()
+    (printout t "What is your symptom? ")
+    (bind ?answer (read))
+    (bind ?diseases (filter-by-symptom-name(?answer)))
+    (printout t "Found diseases: " ?diseases crlf)
 )
 
-(defrule determine-disease-data ""
-    => 
-    (assert (symptoms (ask-question "What is your symptom? ")))
-)
+(deffunction filter-by-symptom-name (?symptom-name)
+  (bind ?list (create$))
+  (do-for-all-facts (?f symptom-disease) (= ?f:symptom-name ?symptom-name)
+     (bind ?list (create$ ?list ?f:disease-name)))
+  return ?list)
 
-(facts)
-(defrule create-patient-instance
-    (patient-first-name ?pfn)
-    (patient-last-name ?pln)
-    (patient-age ?pa)
-    (patient-gender ?pg)
-    =>
-    (make-instance patient of Patient
-        (first_name ?pfn)
-        (last_name ?pln)
-        (age ?pa)
-        (gender ?pg)))
-
+(load fn71568_rules.clp)
 
 (reset)
 (run)
 (facts)
 
 (exit)
-
-
-
 ; (save-instances instances.clp)
